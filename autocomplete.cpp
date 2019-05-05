@@ -36,6 +36,8 @@ int main(int argc, char** argv)
     vector<string> vec;
     //bool to determine loop
     bool cont = true;
+    //to see if our input has a underscore
+    bool underscore = false; 
     //make new DictionaryTrie
     DictionaryTrie* D = new DictionaryTrie();
     
@@ -52,17 +54,31 @@ int main(int argc, char** argv)
     while(cont){
         cout << "Enter a prefix/pattern to search for:" << endl;
         getline(cin,pre);
+        //check the string for underscores
+        for(unsigned int i = 0; i<pre.size();i++){
+            if(pre[i] == '_'){
+                underscore = true;
+            }
+        }
 
         cout << "Enter a number of completions:" << endl;
         string str;
         getline(cin, str);
         completion = stoi(str);
-        //get a vector of predictions
-        vec = D->predictCompletions(pre,completion);
+
+        if(underscore){
+            vec = D->predictUnderscore(pre,completion);
+        }
+        else{
+            //get a vector of predictions
+            vec = D->predictCompletions(pre,completion);
+        }
+
         //print out the words
         for(unsigned int i =0; i<vec.size();i++){
             cout << vec[i] << endl;
         }
+
         //promt user to continue
         cout << "Continue? (y/n)" << endl;
         getline(cin, option);

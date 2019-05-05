@@ -304,9 +304,8 @@ std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsig
         }
     }
 
-    vector<DictionaryTrieNode*>* potentialComp; 
     //call recursive to find underscore parts
-    findUnd(move, potentialComp);
+    findUnd(move);
     
 
     /*the following long section handles different cases of where the _ can be
@@ -316,9 +315,9 @@ std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsig
     
     //handle if only underscore was passed in
     if(pattern.length() == 1){
-        while(!(potentialComp->empty())){
+        while(!(potentialComp.empty())){
             //access potential completion to this single underscore 
-            DictionaryTrieNode* findN = potentialComp->back();
+            DictionaryTrieNode* findN = potentialComp.back();
 
             if(findN->freq > 0){
                 //this case only requires making a string out of the values of out nodes
@@ -329,20 +328,20 @@ std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsig
                     minPairs.pop();
                 }
                 //remove from options
-                potentialComp->pop_back(); 
+                potentialComp.pop_back(); 
             }
             else{
                 //remove from options
-                potentialComp->pop_back(); 
+                potentialComp.pop_back(); 
             }
         }
     }
     //if underscore is at end
     else if(i == pattern.length()-1){ 
-        while(!(potentialComp->empty())){
+        while(!(potentialComp.empty())){
 
             //to hold current potential completion
-            DictionaryTrieNode* findN = potentialComp->back();
+            DictionaryTrieNode* findN = potentialComp.back();
             //if this potential completion has a frequence
             if(findN->freq > 0){
                 pair<unsigned int,string> ins =  make_pair(findN->freq,
@@ -355,21 +354,21 @@ std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsig
                     minPairs.pop();
                 }
                 //remove from potential completions
-                potentialComp->pop_back(); 
+                potentialComp.pop_back(); 
             }
             else{
                 //remove from potential completions
-                potentialComp->pop_back(); 
+                potentialComp.pop_back(); 
             }
         }     
     }
     //if underscore is at beggining
     else if(i == 0){
         
-        while(!(potentialComp->empty())){
+        while(!(potentialComp.empty())){
         
             //to hold current potential completion
-            DictionaryTrieNode* findN = potentialComp->back();
+            DictionaryTrieNode* findN = potentialComp.back();
             //search for the remainder of the patter from this node    
             unsigned int freq = completeWord(pattern,findN->equal,i+1);
 
@@ -383,19 +382,19 @@ std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsig
                     minPairs.pop();
                 }
                 //remove from potential completions
-                potentialComp->pop_back(); 
+                potentialComp.pop_back(); 
             }
             else{
                 //remove from potential completions
-                potentialComp->pop_back();  
+                potentialComp.pop_back();  
             }
         }
     }
     //if underscore is anywhere else inbetween the string
     else{
-        while(!(potentialComp->empty())){
+        while(!(potentialComp.empty())){
             //to hold current potential completion
-            DictionaryTrieNode* findN = potentialComp->back();
+            DictionaryTrieNode* findN = potentialComp.back();
             //search for the remainder of the patter from this node    
             unsigned int freq = completeWord(pattern,findN->equal,i+1);
 
@@ -411,11 +410,11 @@ std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsig
                     minPairs.pop();
                 }
                 //remove from potential completions
-                potentialComp->pop_back(); 
+                potentialComp.pop_back(); 
             }
             else{
                 //remove from potential completions
-                potentialComp->pop_back();  
+                potentialComp.pop_back();  
             }
         
                 
@@ -442,18 +441,18 @@ std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsig
 
 
 //helper to fill a priority que with all possible fillers to the blank
-void DictionaryTrie::findUnd(DictionaryTrieNode* mov, vector<DictionaryTrieNode*>* insertU ){ 
+void DictionaryTrie::findUnd(DictionaryTrieNode* mov){ 
 
     if(mov == nullptr){
         return;
     }
          
-    insertU->push_back(mov);    
+    potentialComp.push_back(mov);    
    
     //search left tree
-    findUnd(mov->left,insertU);
+    findUnd(mov->left);
     //search right tree
-    findUnd(mov->right, insertU);
+    findUnd(mov->right);
     
 }
 

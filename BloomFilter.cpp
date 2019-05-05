@@ -3,6 +3,7 @@
 /* Create a new bloom filter with the size in bytes */
 BloomFilter::BloomFilter(size_t numBytes)
 {
+    
 }
 
 /* Insert an item into the bloom filter */
