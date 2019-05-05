@@ -76,4 +76,7 @@ int main(int argc, char** argv)
     }
     //delete the DictionaryTrie
     delete D;   
+    
+    return 1;
 }
+

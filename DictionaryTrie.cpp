@@ -6,8 +6,8 @@ DictionaryTrie::DictionaryTrie()
 {
     root = nullptr;
 }
-
-/** 
+ 
+/* 
  * Insert a word with its frequency into the dictionary.
  * Return true if the word was inserted, and false if it
  * was not (i.e. it was already in the dictionary or it was
@@ -120,11 +120,11 @@ bool DictionaryTrie::find(std::string word) const
             
         //if current char is less than node
         if(word[i] < move->value){
-            move = move->right;
+            move = move->left;
         }
         //if current char is greater than node
         else if(move->value < word[i]){        
-            move = move->left;
+            move = move->right;
         }
         //if current character is equal to node
         else{
@@ -165,8 +165,7 @@ std::vector<std::string> DictionaryTrie::predictCompletions(std::string prefix, 
     //if the tree has no root
     if(root == nullptr){
         return myWords;
-    }
- 
+    } 
     //start at root
     DictionaryTrieNode* move = root;
     
@@ -176,11 +175,11 @@ std::vector<std::string> DictionaryTrie::predictCompletions(std::string prefix, 
             
         //if current char is less than node
         if(prefix[i] < move->value){
-            move = move->right;
+            move = move->left;
         }
         //if current char is greater than node
         else if(move->value < prefix[i]){        
-            move = move->left;
+            move = move->right;
         }
         //if current character is equal to node
         else{
@@ -199,7 +198,9 @@ std::vector<std::string> DictionaryTrie::predictCompletions(std::string prefix, 
             return myWords;
         }
     }
-    //handle if prefix is a word
+
+ 
+   //handle if prefix is a word
     if(move->endOfWord){
         //make a pair of the prefix and place in pairs
         pair<unsigned int,string> word = make_pair(move->freq,prefix);      
@@ -259,9 +260,247 @@ void DictionaryTrie::findWords(DictionaryTrieNode* mov, string pre){
  */
 std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsigned int num_completions)
 {
-    vector<string> deez;
-    return deez;
+
+    bool myBool = true;
+    //holds strings i will return
+    vector<string> myWords;
+
+    //if the tree has no root
+    if(root == nullptr){
+        return myWords;
+    } 
+    //start at root
+    DictionaryTrieNode* move = root;
+                
+    unsigned int i = 0;
+    //loop to find position of last char in prefix
+    while(myBool){
+        if(pattern[i] == '_'){
+            break; 
+        }    
+        //if current char is less than node
+        if(pattern[i] < move->value){
+            move = move->left;
+        }
+        //if current char is greater than node
+        else if(move->value < pattern[i]){        
+            move = move->right;
+        }
+        //if current character is equal to node
+        else{
+            //if move is on the node containing last char of pref
+            if(i == (pattern.length()-1)){
+                return myWords;   
+            }
+            else{
+                move = move->equal; 
+                i++;
+            }
+        }
+        
+        //if the node moved to is null
+        if(move == nullptr){
+            return myWords;
+        }
+    }
+
+    vector<DictionaryTrieNode*>* potentialComp; 
+    //call recursive to find underscore parts
+    findUnd(move, potentialComp);
+    
+
+    /*the following long section handles different cases of where the _ can be
+    * the main difference is the way that the string is put back together with
+    * its missing underscore part
+    *  */
+    
+    //handle if only underscore was passed in
+    if(pattern.length() == 1){
+        while(!(potentialComp->empty())){
+            //access potential completion to this single underscore 
+            DictionaryTrieNode* findN = potentialComp->back();
+
+            if(findN->freq > 0){
+                //this case only requires making a string out of the values of out nodes
+                pair<unsigned int, string> ins = make_pair(findN->freq,string(1,findN->value));
+                minPairs.push(ins);    
+                //to only have num_completion amount of completions  
+                if(num_completions < minPairs.size()){
+                    minPairs.pop();
+                }
+                //remove from options
+                potentialComp->pop_back(); 
+            }
+            else{
+                //remove from options
+                potentialComp->pop_back(); 
+            }
+        }
+    }
+    //if underscore is at end
+    else if(i == pattern.length()-1){ 
+        while(!(potentialComp->empty())){
+
+            //to hold current potential completion
+            DictionaryTrieNode* findN = potentialComp->back();
+            //if this potential completion has a frequence
+            if(findN->freq > 0){
+                pair<unsigned int,string> ins =  make_pair(findN->freq,
+                    pattern.substr(0,(pattern.length()-1)) + string(1,findN->value));
+                //add to min que
+                minPairs.push(ins);  
+  
+                //to only have num_completion amount of completions  
+                if(num_completions < minPairs.size()){
+                    minPairs.pop();
+                }
+                //remove from potential completions
+                potentialComp->pop_back(); 
+            }
+            else{
+                //remove from potential completions
+                potentialComp->pop_back(); 
+            }
+        }     
+    }
+    //if underscore is at beggining
+    else if(i == 0){
+        
+        while(!(potentialComp->empty())){
+        
+            //to hold current potential completion
+            DictionaryTrieNode* findN = potentialComp->back();
+            //search for the remainder of the patter from this node    
+            unsigned int freq = completeWord(pattern,findN->equal,i+1);
+
+            if(freq > 0){
+                pair<unsigned int,string> ins =  make_pair(freq,
+                    string(1,findN->value) + pattern.substr(1,(pattern.length()-1)));
+                //add to min que
+                minPairs.push(ins); 
+                //to only have num_completion amount of completions  
+                if(num_completions < minPairs.size()){
+                    minPairs.pop();
+                }
+                //remove from potential completions
+                potentialComp->pop_back(); 
+            }
+            else{
+                //remove from potential completions
+                potentialComp->pop_back();  
+            }
+        }
+    }
+    //if underscore is anywhere else inbetween the string
+    else{
+        while(!(potentialComp->empty())){
+            //to hold current potential completion
+            DictionaryTrieNode* findN = potentialComp->back();
+            //search for the remainder of the patter from this node    
+            unsigned int freq = completeWord(pattern,findN->equal,i+1);
+
+            if(freq > 0){
+                pair<unsigned int,string> ins =  make_pair(freq,
+                    pattern.substr(0,i) + string(1,findN->value) + 
+                    pattern.substr(i+1,(pattern.length()-i)));
+                //add to min que
+                minPairs.push(ins); 
+                //to only have num_completion amount of completions  
+                if(num_completions < minPairs.size()){
+                    //eliminate the less frequent completion
+                    minPairs.pop();
+                }
+                //remove from potential completions
+                potentialComp->pop_back(); 
+            }
+            else{
+                //remove from potential completions
+                potentialComp->pop_back();  
+            }
+        
+                
+        }
+
+    }
+    vector<string>::iterator start;
+
+    while(!(minPairs.empty())){
+        //access pair with lowest freq from minPairs
+        pair<unsigned int,string> word = minPairs.top();
+        //get iterator at begining of vector
+        start = myWords.begin();
+        //insert top of min que to front
+        myWords.insert(start, word.second);
+        //remove this from minPairs
+        minPairs.pop();
+        
+    }
+
+    return myWords;
 }
+
+
+
+//helper to fill a priority que with all possible fillers to the blank
+void DictionaryTrie::findUnd(DictionaryTrieNode* mov, vector<DictionaryTrieNode*>* insertU ){ 
+
+    if(mov == nullptr){
+        return;
+    }
+         
+    insertU->push_back(mov);    
+   
+    //search left tree
+    findUnd(mov->left,insertU);
+    //search right tree
+    findUnd(mov->right, insertU);
+    
+}
+
+//return true if this "underscore" value completes the word
+unsigned int DictionaryTrie::completeWord(string word,DictionaryTrieNode* here, unsigned int x){
+    
+    DictionaryTrieNode* move = here;
+
+    //if the node moved to is null
+    if(move == nullptr){
+        return 0;
+    }
+
+    bool myBool = true;
+   
+    //i was ++ before passed in to g _a is on a and not _
+    while(myBool){
+    
+        //if current char is less than node
+        if(word[x] < move->value){
+            move = move->left;
+        }
+        //if current char is greater than node
+        else if(move->value < word[x]){        
+            move = move->right;
+        }
+        //if current character is equal to node
+        else{
+            //if move is on the node containing last char of pref
+            if(x == (word.length()-1)){
+                
+                return move->freq;   
+            }
+            else{
+                move = move->equal; 
+                x++;
+            }
+        }
+        
+        //if the node moved to is null
+        if(move == nullptr){
+            return 0;
+        }
+    }
+    return 0;
+}
+
 
 /* Destructor */
 DictionaryTrie::~DictionaryTrie()
@@ -284,24 +523,5 @@ void DictionaryTrie::deleteAll(DictionaryTrieNode* n){
     delete(n);
 
 }
-/*doesnt work when in here but i know it counts for points
- *
-//struct for comparing in priority que
-struct comparePair{
-         bool operator()(const pair<unsigned int, string> & p1,
-                         const pair<unsigned int, string> & p2){
-             if(p1.first == p2.first){
-                 if((p1.second).compare(p2.second) < 0 ){
-                     return false;
-                 }
-                 else{
-                     return true;
-                 }
-             }
-             else{
-                 return p1.first < p2.first;
-             }
-        }
-     };
-*/
-
+//doesnt work when in here but i know it counts for points
+ 
