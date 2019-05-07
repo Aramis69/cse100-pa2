@@ -90,6 +90,7 @@ int main(int argc, char** argv)
         }   
 
     }
+    myFile.close();
     //delete the DictionaryTrie
     delete D;   
     

@@ -31,72 +31,8 @@ bool DictionaryTrie::insert(std::string word, unsigned int freq)
 
     //to move through tree  
     DictionaryTrieNode* move = root;
-    //loop to find position of last char in prefix
-    while(true){
-
-        //if current char is less than node
-        if(word[i] < move->value){
- 
-            //if left is null insert
-            if(move->left == nullptr){
-                //insert new node with current char val
-                move->left  = new DictionaryTrieNode();
-                move = move->left;
-                move->value = word[i];
-                //will move to newley created node after this
-            }   
-            else{     
-                //move to left node
-                move = move->left;
-            }
-        }
-        //if current char is greater than node
-        else if(move->value < word[i]){
-            //if right is null
-            if(move->right == nullptr){
-                move->right  = new DictionaryTrieNode();
-                move = move->right;
-                move->value = word[i];
-            }
-            else{        
-                move = move->right;
-            }
-        }
-        else{
-        //if current character is equal to node
-            //if move is on the node containing last char of pref
-            if(i == (word.length()-1)){
-                //if it was in container but not set
-                if(move->endOfWord == true){
-                    return false;    
-                }
-                //set end node values
-                move->endOfWord = true;
-                move->freq = freq;
-                return true;
-            }
-            else{   
-            //current i is same char as node
-
-                //if the next equal is null
-                if(move->equal == nullptr){
-                    //create node for next char at equal position;
-                    move->equal = new DictionaryTrieNode();
-                    move = move->equal;
-                    move->value = word[i+1];
-                    i = i+1;
-                    //move will then go to this new node
-                }
-                else{
-                    //when there is still chars in word
-                    move = move->equal; 
-                    i = i+1;
-                }
-            }
-
-        }
-    }
-    return false;
+    bool myBool = insertHelp(move,i,word,freq);
+    return myBool;
 }
 
 
@@ -147,6 +83,104 @@ bool DictionaryTrie::find(std::string word) const
     return move->endOfWord;
 }
 
+bool DictionaryTrie::insertHelp(DictionaryTrieNode* move, unsigned int i,
+                                string word, unsigned int freq){
+    bool boolRet;
+    //if current char is less than node
+    if(word[i] < move->value){
+        //if left is null insert
+        if(move->left == nullptr){
+            //insert new node with current char val
+            move->left  = new DictionaryTrieNode();
+            move->left->value = word[i];
+            //recursive call
+            boolRet = insertHelp(move->left,i,word,freq);   
+            //update the max
+            setMax(move); 
+        }   
+        else{     
+            //recursive call
+            boolRet = insertHelp(move->left,i,word,freq);            
+            //update the max
+            setMax(move);
+        }
+    }
+    //if current char is greater than node
+    else if(move->value < word[i]){
+        //if right is null
+        if(move->right == nullptr){
+            move->right  = new DictionaryTrieNode();
+            move->right->value = word[i];
+            //recursive call
+            boolRet = insertHelp(move->right,i,word,freq);
+            //update the max
+            setMax(move);
+        }
+        else{        
+            //recursive call
+            boolRet = insertHelp(move->right,i,word,freq);
+            //update the max
+            setMax(move);
+        }
+    }
+    else{
+    //if current character is equal to node
+        //if move is on the node containing last char of pref
+        if(i == (word.length()-1)){
+            //if it was in container but not set
+            if(move->endOfWord == true){
+                return false;    
+            }
+            //set end node values
+            move->endOfWord = true;
+            move->freq = freq;
+            //update the max
+            setMax(move);
+            return true;
+        }
+        else{   
+        //current i is same char as node
+            //if the next equal is null
+            if(move->equal == nullptr){
+                //create node for next char at equal position;
+                move->equal = new DictionaryTrieNode();
+                move->equal->value = word[i+1];
+                //move will then go to this new node
+                boolRet = insertHelp(move->equal,i+1,word,freq);
+                //update the max
+                setMax(move);
+            }
+            else{
+                //when there is still chars in word
+                boolRet = insertHelp(move->equal,i+1,word,freq);
+                //update the max
+                setMax(move);
+            }
+        }
+    }
+    return boolRet;
+}
+void DictionaryTrie::setMax(DictionaryTrieNode* mov){
+        //set the maxFrequency
+        unsigned int max = mov->freq;
+        if(!(mov->left == nullptr)){
+            if(max < mov->left->maxFreq){
+                max = mov->left->maxFreq;
+            } 
+        }          
+        if(!(mov->equal == nullptr)){
+            if(max < mov->equal->maxFreq){
+                max = mov->equal->maxFreq;
+            } 
+        }
+        if(!(mov->right == nullptr)){
+            if(max < mov->right->maxFreq){
+                max = mov->right->maxFreq;
+            } 
+        }
+        mov->maxFreq = max;        
+}
+
 /* 
  * Return up to num_completions of the most frequent completions
  * of the prefix, such that the completions are words in the dictionary.
@@ -162,8 +196,15 @@ std::vector<std::string> DictionaryTrie::predictCompletions(std::string prefix, 
 {   
     //holds strings i will return
     vector<string> myWords;
+    //if word is empty
+    if(prefix.length() == 0){
+        return myWords;
+    }
     //if the tree has no root
     if(root == nullptr){
+        return myWords;
+    }
+    if(num_completions == 0){
         return myWords;
     } 
     //start at root
@@ -198,54 +239,110 @@ std::vector<std::string> DictionaryTrie::predictCompletions(std::string prefix, 
             return myWords;
         }
     }
-
  
    //handle if prefix is a word
-    if(move->endOfWord){
+    if(move->endOfWord == true){
         //make a pair of the prefix and place in pairs
         pair<unsigned int,string> word = make_pair(move->freq,prefix);      
-        pairs.push(word);
+        minPairs.push(word);
     }
     //find other words from current node
-    findWords(move->equal,prefix);
+    findWords(move->equal,prefix, num_completions);
 
+    vector<string>::iterator start;
     //move from pairs to myWord vector
-    for(unsigned int x=0; x < num_completions; x++){
-        //if num_completions > amount of competions in pairs        
-        if(pairs.empty()){
-            return myWords;
-        }
+    while(!(minPairs.empty())){
+
         //take top element and insert into vector then remove from que
-        pair<unsigned int, string> top = pairs.top();
-        myWords.push_back(top.second);
-        pairs.pop(); 
+        pair<unsigned int, string> top = minPairs.top();
+        
+        //get iterator at begining of vector
+        start = myWords.begin();
+        //insert top of min que to front
+        myWords.insert(start, top.second);
+        //take this completion out of minPairs
+        minPairs.pop();
     }
-    while(!(pairs.empty())){
-        pairs.pop();
-    }
+
     
     return myWords;
 }
     
-void DictionaryTrie::findWords(DictionaryTrieNode* mov, string pre){ 
+void DictionaryTrie::findWords(DictionaryTrieNode* mov, string pre, unsigned int num){ 
 
     if(mov == nullptr){
         return;
     }
-    
+    //if this is a completed word
     if(mov->endOfWord){
-        
-        pair<unsigned int,string> word = make_pair(mov->freq,pre + mov->value);      
-        pairs.push(word);
+        if(minPairs.size() == num){
+            pair<unsigned int,string> top = minPairs.top();   
+            if(top.first < mov->freq){
+                minPairs.pop();
+                pair<unsigned int,string> word = make_pair(mov->freq,pre + mov->value);      
+                minPairs.push(word);    
+            }
+        }
+        else{
+            //add to minPairs que
+            pair<unsigned int,string> word = make_pair(mov->freq,pre + mov->value);      
+            minPairs.push(word);
+        }
     }       
-    
-    //search left tree
-    findWords(mov->left, pre);
-    //search middle tree
-    findWords(mov->equal,pre + mov->value);
-    //search right tree
-    findWords(mov->right,pre);
-    
+
+    //if the priority que is full
+    if(minPairs.size() == num){
+        /*  only go down if the smallest frequency is smaller than the 
+            max of the branch */
+        if(mov->left != nullptr){ 
+            pair<unsigned int,string> top = minPairs.top();
+            if(top.first < mov->left->maxFreq){
+                //search left tree
+                findWords(mov->left, pre, num);
+            }
+        }  
+    }
+    //else traverse regularly
+    else{
+        //search left tree
+        findWords(mov->left, pre, num);
+    }
+
+    //if the priority que is full
+    if(minPairs.size() == num){
+        /*  only go down if the smallest frequency is smaller than the 
+            max of the branch */
+        if(mov->equal != nullptr){
+            pair<unsigned int,string> top = minPairs.top();   
+            if(top.first < mov->equal->maxFreq){
+                //search middle tree
+                findWords(mov->equal,pre + mov->value, num);
+            }
+        }  
+    }
+    //else traverse regularly
+    else{
+        //search middle tree
+        findWords(mov->equal,pre + mov->value, num);
+    }
+
+    //if the priority que is full
+    if(minPairs.size() == num){
+        /*  only go down if the smallest frequency is smaller than the 
+            max of the branch */
+        if(mov->right != nullptr){    
+            pair<unsigned int,string> top = minPairs.top();  
+            if(top.first < mov->right->maxFreq){
+                //search right tree
+                findWords(mov->right,pre,num);
+            }
+        }  
+    }
+    //else traverse regularly
+    else{
+        //search right tree
+        findWords(mov->right,pre,num);
+    }   
 }
 
 /* Return up to num_completions of the most frequent completions
@@ -267,6 +364,9 @@ std::vector<string> DictionaryTrie::predictUnderscore(std::string pattern, unsig
 
     //if the tree has no root
     if(root == nullptr){
+        return myWords;
+    }
+    if(num_completions == 0){
         return myWords;
     } 
     //start at root

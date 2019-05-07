@@ -15,7 +15,8 @@ class DictionaryTrieNode{
         bool endOfWord;
         unsigned int freq;
         char value;       
-            
+        unsigned int maxFreq;
+    
         DictionaryTrieNode* left;       
         DictionaryTrieNode* equal;       
         DictionaryTrieNode* right;       

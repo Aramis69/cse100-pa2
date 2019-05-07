@@ -6,7 +6,8 @@
 
 
 DictionaryTrieNode::DictionaryTrieNode()
-{  
+{   
+    maxFreq = 0;
     value = 0; 
     endOfWord = false;
     freq = 0;

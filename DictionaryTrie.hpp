@@ -21,10 +21,46 @@ using namespace std;
  *  You may implement this class as either a mulit-way trie
  *  or a ternary search trie, but you must use one or the other.
  */
-class DictionaryTrie
-{
+/*regular comparator for priority que*/
+struct comparePair{
+          bool operator()(const pair<unsigned int, string> & p1,
+                          const pair<unsigned int, string> & p2){
+              if(p1.first == p2.first){
+                  if((p1.second).compare(p2.second) < 0 ){
+                      return false;
+                  }
+                  else{
+                      return true;
+                  }
+              }
+              else{
+                  return p1.first < p2.first;
+              }
+         }
+      };
 
-protected: 
+
+/*min comparator for priority que*/  
+struct comparePairMin{
+          bool operator()(const pair<unsigned int, string> & p1,
+                          const pair<unsigned int, string> & p2){
+              if(p1.first == p2.first){
+                  if((p1.second).compare(p2.second) < 0 ){
+                      return true;
+                  }
+                  else{
+                      return false;
+                  }
+              }
+              else{
+                  return p1.first > p2.first;
+              }
+         }
+      };
+
+
+class DictionaryTrie
+{ 
 public:
 
   DictionaryTrieNode * root;
@@ -76,32 +112,36 @@ public:
 
 private:
 
-//stuct for comparing in priotiry que  
-struct comparePair{
-          bool operator()(const pair<unsigned int, string> & p1,
-                          const pair<unsigned int, string> & p2){
-              if(p1.first == p2.first){
-                  if((p1.second).compare(p2.second) < 0 ){
-                      return false;
-                  }
-                  else{
-                      return true;
-                  }
-              }
-              else{
-                  return p1.first < p2.first;
-              }
-         }
-      };
-
     //helper method to recursivly find completions to prefix
-    void findWords(DictionaryTrieNode* mov, string pre);
+    void findWords(DictionaryTrieNode* mov, string pre, unsigned int num);
+
+    //helper method for predict underscore
+    void findUnd(DictionaryTrieNode* mov);
+    
+    /*starts from a node and checks if the word is completed*/
+    unsigned int completeWord(string word, DictionaryTrieNode*here, 
+                            unsigned int x);
+  
+    /*function recursively inserts into trie*/
+    bool insertHelp(DictionaryTrieNode* mov,unsigned int i,string word,
+                    unsigned int freq);
+
+    //sets max value at passed in node
+    void setMax(DictionaryTrieNode* mov); 
 
     //helper method to delete a Trie tree
     static void deleteAll(DictionaryTrieNode* n);
-
+    
+    /*was used for unoptimized insert*/
     priority_queue<pair<unsigned int,string>,vector<pair<unsigned int,string>>,
                 comparePair> pairs;
+
+    /*min priority que*/
+    priority_queue<pair<unsigned int,string>,vector<pair<unsigned int,string>>,
+                comparePairMin> minPairs;
+    
+    /*stores potential underscore fillers*/
+    vector<DictionaryTrieNode*> potentialComp;
 
 };
 

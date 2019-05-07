@@ -7,11 +7,9 @@ CXX ?= g++
 CXXFLAGS=-std=c++11 -g -Wall
 LDFLAGS=-g
 
-all: autocomplete benchtrie firewall hashStats test_predictUnd
+all: autocomplete benchtrie firewall hashStats
 
 autocomplete: util.o DictionaryTrie.o DictionaryTrieNode.o
-
-test_predictUnd: util.o DictionaryTrie.o DictionaryTrieNode.o
 
 benchtrie: util.o DictionaryTrie.o DictionaryTrieNode.o
 
@@ -28,4 +26,4 @@ BloomFilter.o: BloomFilter.hpp
 util.o: util.hpp
 
 clean:
-	rm -f test autocomplete benchtrie firewall hashStats test_predictUnd *.o core* *~
+	rm -f test autocomplete benchtrie firewall hashStats  *.o core* *~
